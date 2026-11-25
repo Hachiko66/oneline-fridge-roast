@@ -1,61 +1,59 @@
-#!/usr/bin/env python3
-"""Fridge Roast: One Line, Biggest Laugh (make.fun).
+"""Fridge Roast: One Line, Biggest Laugh.
 
-Writes a single original roast of a smart fridge to entry.txt.
-The line is fixed: no randomness, no clock, no input, so every
-run produces byte-identical output.
+One line, one roast: a fridge that updated itself overnight and now
+demands a ritual. The turn is the last clause — the setup promises a
+"smart" appliance, then the punchline swaps smart for haunted.
 """
 
 import os
-import sys
 
-# The roast: the fridge's app texts judgmental opinions about the
-# milk, and the punchline deflates its pretension. 111 characters,
-# one line, aimed squarely at the smart fridge itself.
+# The joke's turn: two presses + a whisper set up a "smart" fridge,
+# then the final clause reframes the whole ritual as a haunting.
 ROAST = (
-    "My smart fridge texted me that my milk is 'past its prime' "
-    "\u2014 it's milk, it never had a prime, it had a Tuesday."
+    "My fridge updated its firmware overnight and now the ice maker only "
+    "works if I press the button twice and whisper to it \u2014 it's not "
+    "smart, it's haunted."
 )
 
 
-def output_path() -> str:
-    """Resolve the output directory from the environment, or /output."""
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
-    return os.path.join(out_dir, "entry.txt")
-
-
-def validate(text: str) -> None:
-    """Gate checks: 1-200 chars, single line, non-blank, no trailing space."""
-    if not 1 <= len(text) <= 200:
-        raise ValueError(f"line is {len(text)} chars, must be 1-200")
-    if "\n" in text or "\r" in text:
-        raise ValueError("entry must be a single line")
+def validate(text):
+    """Check the roast is a single non-blank line of 1-200 characters."""
+    if not isinstance(text, str):
+        raise TypeError("roast must be a string")
     if not text.strip():
-        raise ValueError("entry must not be blank")
+        raise ValueError("roast must not be blank")
     if text != text.strip():
-        raise ValueError("entry must not have leading/trailing whitespace")
+        raise ValueError("roast must not have leading or trailing whitespace")
+    if "\n" in text or "\r" in text:
+        raise ValueError("roast must be a single line")
+    if not 1 <= len(text) <= 200:
+        raise ValueError("roast must be between 1 and 200 characters")
+    return True
 
 
-def write_entry(path: str, text: str) -> None:
-    """Write the roast, force mode 0644, and read it back to verify."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(text)
-    # A 0600 mode once got a make.fun entry rejected; force 0644.
+def write_entry():
+    """Write ROAST exactly to entry.txt, no trailing newline, mode 0644."""
+    output_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output/entry.txt")
+    if output_dir.endswith("entry.txt"):
+        path = output_dir
+    else:
+        path = os.path.join(output_dir, "entry.txt")
+    data = ROAST.encode("utf-8")
+    with open(path, "wb") as handle:
+        handle.write(data)
     os.chmod(path, 0o644)
-    with open(path, "r", encoding="utf-8", newline="\n") as fh:
-        written = fh.read()
-    if written != text:
-        raise AssertionError("output is not byte-identical to the roast")
+    with open(path, "rb") as handle:
+        written = handle.read()
+    assert written == data, "entry.txt is not byte-identical to ROAST"
+    return path
 
 
-def main() -> int:
+def main():
     validate(ROAST)
-    path = output_path()
-    write_entry(path, ROAST)
+    path = write_entry()
     print(ROAST)
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
